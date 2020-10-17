@@ -1,8 +1,16 @@
 import 'package:all_my_cards/pages/home_page.dart';
+import 'package:all_my_cards/pages/sign_in_page.dart';
+import 'package:all_my_cards/states/app_state.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(ChangeNotifierProvider<AppState>(
+    create: (context) {
+      return AppState();
+    },
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -14,7 +22,16 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomePage(),
+      home: Consumer<AppState>(
+        builder: (context, state, child) {
+          if (state.auth.isSignedIn) {
+            return child;
+          } else {
+            return SignInPage();
+          }
+        },
+        child: HomePage(),
+      ),
     );
   }
 }

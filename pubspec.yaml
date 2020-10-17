@@ -27,6 +27,7 @@ dependencies:
   googleapis_auth: any
   http: ^0.12.2
   logger: ^0.9.4
+  provider: ^4.3.2+2
   oauth2_client: ^1.5.1
   url_launcher: ^5.7.2
   webview_flutter: ^1.0.0
