@@ -1,7 +1,4 @@
 import 'dart:convert';
-
-import 'package:all_my_cards/models/payment_card.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart';
 import 'package:logger/logger.dart';
 
@@ -37,25 +34,19 @@ class URLS {
   static const String baseSheets = 'https://sheets.googleapis.com/v4';
 }
 
-class GSheets extends ChangeNotifier {
+class GSheets {
   GSheets(this.client);
-
+  Logger _log = Logger();
   final BaseClient client;
-  List<GDriveFile> all = [];
   dynamic selected;
-  List<dynamic> selectedValues;
-  List<PaymentCard> cards = [];
 
   Future<List<GDriveFile>> getAll() async {
     final resp = await client.get('${URLS.baseDrive}/files');
     Logger().d(resp.body);
     final json = jsonDecode(resp.body);
-    all = json['files']
+    return json['files']
         .map<GDriveFile>((file) => GDriveFile.fromMap(file))
         .toList();
-
-    notifyListeners();
-    return all;
   }
 
   Future<dynamic> get(String id) async {
@@ -70,11 +61,10 @@ class GSheets extends ChangeNotifier {
     selected = json;
     await getValues(id);
 
-    notifyListeners();
     return selected;
   }
 
-  Future<dynamic> getValues(String id,
+  Future<List<dynamic>> getValues(String id,
       {int sheetNumber = 1,
       String cellRange = 'A1:Z100',
       String majorDimension = 'ROWS' // COLUMNS, ROWS
@@ -93,51 +83,59 @@ class GSheets extends ChangeNotifier {
     final resp = await client.get(
         '${URLS.baseSheets}/spreadsheets/$id/values/$range?majorDimension=$majorDimension');
 
-    Logger().d(resp.body);
-    final json = jsonDecode(resp.body);
-    selectedValues = json["values"];
+    Logger().d('getAll: response: ${resp.body}');
+    Map json = jsonDecode(resp.body);
 
-    Logger().d('CARDS JSON: Total ${selectedValues.length}: $selectedValues');
-
-    cards = selectedValues
-        .map<PaymentCard>((row) {
-          Logger().d('ROW:${row.length}: $row');
-          if (row.length < 5) {
-            Logger().d('ROW rejected: $row');
-
-            return null;
-          }
-          return PaymentCard(
-            label: row[0] ?? 'No-Label',
-            cardHolderName: row[1] ?? 'No-CardHolder',
-            limit: row[2] ?? 'No-Limit',
-            paymentDueDate: row[3] ?? 'No-PaymentDueDate',
-            statementDate: row[4] ?? 'No-StatementDueDate',
-          );
-        })
-        .where((card) => card != null)
-        // .takeWhile((card) => card != null)
-        .toList();
-    Logger().d('CARDS: ${cards.length}');
-    notifyListeners();
-    return selectedValues;
+    return json.containsKey('values') ? json['values'] : [];
   }
 
-  void create() async {
+  Future<dynamic> updateValues(
+    String id,
+    List<dynamic> values, {
+    int sheetNumber = 1,
+    String cellRange = 'A1:Z100',
+    String majorDimension = 'ROWS', // COLUMNS, ROWS
+  }) async {
+    assert(id != null);
+    assert(values != null);
+
+    String range = '';
+    if (sheetNumber != null && sheetNumber > 0) {
+      range += 'Sheet$sheetNumber!';
+    }
+    if (cellRange != null && cellRange.isNotEmpty) {
+      range += '$cellRange';
+    }
+    Map<String, dynamic> data = {
+      'values': values,
+      'majorDimension': majorDimension,
+      'range': range,
+    };
+    _log.d('updateValues: data: $data');
+
+    String bodyStr = json.encode(data);
+    final resp = await client.put(
+      '${URLS.baseSheets}/spreadsheets/$id/values/$range?valueInputOption=1',
+      body: bodyStr,
+    );
+
+    _log.d('updateValues: complete, ${resp.body}');
+  }
+
+  Future<String> create(String fileName) async {
     Logger log = Logger();
 
-    final resp = await client.post('${URLS.baseSheets}/spreadsheets');
-    log.d('Body: ${resp.body}');
-    notifyListeners();
-  }
-
-  Future<void> selectDefault() async {
-    if (all.isEmpty || selected == null || selectedValues == null) {
-      await getAll();
-      if (all.length > 0) {
-        // await get(all[0].id);
-        await getValues(all.first.id);
+    final spreadSheet = Map<String, dynamic>.from({
+      'properties': {
+        'title': fileName,
       }
-    }
+    });
+
+    final resp = await client.post('${URLS.baseSheets}/spreadsheets',
+        body: json.encode(spreadSheet));
+
+    log.d('Body: ${resp.body}');
+    final data = json.decode(resp.body);
+    return data['spreadsheetId'];
   }
 }

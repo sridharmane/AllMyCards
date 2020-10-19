@@ -41,11 +41,13 @@ class Auth extends ChangeNotifier {
       }
 
       final account = await _gs.signIn();
-      await _onSignIn(account);
+      if (account != null) {
+        await _onSignIn(account);
 
-      await SecureStorage()
-          .set(SecureStorageKeys.credentials, jsonEncode(headers));
-      await SecureStorage().set(SecureStorageKeys.user, user.toString());
+        await SecureStorage()
+            .set(SecureStorageKeys.credentials, jsonEncode(headers));
+        await SecureStorage().set(SecureStorageKeys.user, user.toString());
+      }
 
       return account;
     } catch (e) {
@@ -56,7 +58,9 @@ class Auth extends ChangeNotifier {
 
   Future<GoogleSignInAccount> signInSilently() async {
     final account = await _gs.signInSilently();
-    await _onSignIn(account);
+    if (account != null) {
+      await _onSignIn(account);
+    }
     return account;
   }
 

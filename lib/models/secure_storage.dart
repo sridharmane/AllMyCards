@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 class SecureStorageKeys {
   static const String credentials = 'credentials';
   static const String user = 'user';
+  static const String sheetId = 'sheetId';
 }
 
 class SecureStorage {
