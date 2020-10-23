@@ -1,6 +1,7 @@
 import 'package:all_my_cards/pages/home_page.dart';
 import 'package:all_my_cards/pages/sign_in_page.dart';
 import 'package:all_my_cards/states/app_state.dart';
+import 'package:all_my_cards/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,10 +19,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
+      theme: kThemeLight,
+      darkTheme: kThemeDark,
       home: Consumer<AppState>(
         builder: (context, state, child) {
           if (state.auth.isSignedIn) {

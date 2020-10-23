@@ -2,7 +2,6 @@ import 'package:all_my_cards/pages/manage_card_page.dart';
 import 'package:all_my_cards/states/app_state.dart';
 import 'package:all_my_cards/widgets/profile_menu.dart';
 import 'package:all_my_cards/widgets/summary_view.dart';
-import 'package:all_my_cards/widgets/welcome_message.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,7 +52,6 @@ class _MyHomePageState extends State<HomePage> {
         slivers: [
           SliverList(
             delegate: SliverChildListDelegate([
-              WelcomeMessage(),
               SummaryView(),
             ]),
           ),

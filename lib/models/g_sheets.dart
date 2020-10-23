@@ -39,14 +39,19 @@ class GSheets {
   Logger _log = Logger();
   final BaseClient client;
   dynamic selected;
+  List<GDriveFile> _files;
 
   Future<List<GDriveFile>> getAll() async {
+    if (_files != null) {
+      return _files;
+    }
     final resp = await client.get('${URLS.baseDrive}/files');
     Logger().d(resp.body);
     final json = jsonDecode(resp.body);
-    return json['files']
+    _files = json['files']
         .map<GDriveFile>((file) => GDriveFile.fromMap(file))
         .toList();
+    return _files;
   }
 
   Future<dynamic> get(String id) async {

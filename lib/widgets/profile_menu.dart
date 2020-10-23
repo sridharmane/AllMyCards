@@ -1,3 +1,4 @@
+import 'package:all_my_cards/pages/account_page.dart';
 import 'package:all_my_cards/states/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,13 +10,37 @@ enum ProfileMenuOptions {
 class ProfileMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppState>(
-      builder: (_, state, __) => PopupMenuButton<ProfileMenuOptions>(
+    return Consumer<AppState>(builder: (_, state, __) {
+      return IconButton(
+        icon: Hero(
+          tag: 'user-avatar',
+          child: CircleAvatar(
+            backgroundImage: NetworkImage(state.auth.user.photoUrl),
+          ),
+        ),
+        onPressed: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => AccountPage()));
+        },
+      );
+      return PopupMenuButton<ProfileMenuOptions>(
         offset: Offset(0.0, 56.0),
-        icon: CircleAvatar(
-          backgroundImage: NetworkImage(state.auth.user.photoUrl),
+        icon: Hero(
+          tag: 'user-avatar',
+          child: CircleAvatar(
+            backgroundImage: NetworkImage(state.auth.user.photoUrl),
+          ),
         ),
         itemBuilder: (context) => [
+          PopupMenuItem(
+              child: Container(
+            child: Column(children: [
+              Text(
+                '${state.auth.user.displayName}',
+                style: Theme.of(context).textTheme.headline6,
+              )
+            ]),
+          )),
           PopupMenuItem(
             child: Row(
               children: [
@@ -39,7 +64,7 @@ class ProfileMenu extends StatelessWidget {
               break;
           }
         },
-      ),
-    );
+      );
+    });
   }
 }

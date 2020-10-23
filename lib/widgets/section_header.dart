@@ -10,7 +10,7 @@ class SectionHeader extends StatelessWidget {
       padding: EdgeInsets.only(left: 16.0, top: 32.0, right: 16.0, bottom: 8.0),
       child: Text(
         '$label',
-        style: Theme.of(context).textTheme.subtitle1,
+        style: Theme.of(context).textTheme.bodyText1,
       ),
     );
   }

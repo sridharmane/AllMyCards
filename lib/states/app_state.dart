@@ -2,6 +2,7 @@ import 'package:all_my_cards/models/auth.dart';
 import 'package:all_my_cards/models/g_sheets.dart';
 import 'package:all_my_cards/models/payment_card.dart';
 import 'package:all_my_cards/models/secure_storage.dart';
+import 'package:all_my_cards/widgets/card_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:logger/logger.dart';
 
@@ -21,12 +22,35 @@ class AppState extends ChangeNotifier {
 
   GSheets _gSheets;
   GSheets get gSheets => _gSheets;
-  String _sheetId;
+
+  String _fileId;
+  String get fileId => _fileId;
+
   String _defaultFileName = 'AllMyCards DB';
   PaymentCard tempCard;
+
+  CardViewMode _cardViewMode = CardViewMode.info;
+  CardViewMode get cardViewMode => _cardViewMode;
+  set cardViewMode(CardViewMode value) {
+    if (value != _cardViewMode) {
+      _cardViewMode = value;
+      notifyListeners();
+    }
+  }
+
   List<PaymentCard> cardsAll = [];
   List<PaymentCard> cardsToday = [];
-  DateTime today = DateTime.now().toLocal();
+
+  DateTime _today = DateTime.now().toLocal();
+  DateTime get today => _today;
+  set today(DateTime value) {
+    if (value != _today) {
+      _today = value;
+      cardsToday = _getCardsForToday(cardsAll);
+      notifyListeners();
+    }
+  }
+
   bool isLoading = false;
 
   CardsFilters _cardsFilter = CardsFilters.usableToday;
@@ -56,24 +80,24 @@ class AppState extends ChangeNotifier {
     _log.d('_setupGSheets: Start');
     _gSheets = GSheets(_auth.client);
 
-    if (_sheetId == null) {
-      _sheetId = await SecureStorage().get(SecureStorageKeys.sheetId);
-      _log.d('_setupGSheets: sheetId from storage: $_sheetId');
+    if (_fileId == null) {
+      _fileId = await SecureStorage().get(SecureStorageKeys.sheetId);
+      _log.d('_setupGSheets: sheetId from storage: $_fileId');
     }
-    if (_sheetId == null) {
+    if (_fileId == null) {
       final files = await _gSheets.getAll();
       final file = files.firstWhere((f) => f.name == _defaultFileName,
           orElse: () => null);
       if (file == null) {
-        _sheetId = await _gSheets.create(_defaultFileName);
-        _log.d('_setupGSheets: sheetId created: $_sheetId');
+        _fileId = await _gSheets.create(_defaultFileName);
+        _log.d('_setupGSheets: sheetId created: $_fileId');
       } else {
-        _sheetId = file.id;
-        _log.d('_setupGSheets: sheetId from drive: $_sheetId');
+        _fileId = file.id;
+        _log.d('_setupGSheets: sheetId from drive: $_fileId');
       }
-      await SecureStorage().set(SecureStorageKeys.sheetId, _sheetId);
+      await SecureStorage().set(SecureStorageKeys.sheetId, _fileId);
     }
-    final values = await _gSheets.getValues(_sheetId);
+    final values = await _gSheets.getValues(_fileId);
     cardsAll = values
         .map<PaymentCard>(
             (row) => PaymentCard.fromRow('${values.indexOf(row)}', row))
@@ -93,7 +117,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> addCard() async {
     cardsAll.add(tempCard);
-    await _gSheets.updateValues(_sheetId, _cardsAsSheetValues(cardsAll));
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
     tempCard = null;
     notifyListeners();
   }
@@ -101,14 +125,14 @@ class AppState extends ChangeNotifier {
   Future<void> editCard() async {
     int index = cardsAll.indexWhere((c) => c.id == tempCard.id);
     cardsAll[index] = tempCard;
-    await _gSheets.updateValues(_sheetId, _cardsAsSheetValues(cardsAll));
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
     tempCard = null;
     notifyListeners();
   }
 
   Future<void> deleteCard(PaymentCard card) async {
     cardsAll.removeWhere((c) => c.id == card.id);
-    await _gSheets.updateValues(_sheetId, _cardsAsSheetValues(cardsAll));
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
     notifyListeners();
   }
 
