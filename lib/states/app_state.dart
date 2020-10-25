@@ -15,6 +15,9 @@ class AppState extends ChangeNotifier {
   Logger _log = Logger();
   AppState({Auth auth}) : _auth = auth != null ? auth : Auth() {
     _auth?.addListener(_onAuthChanged);
+    final now = DateTime.now();
+    _today = DateTime(now.year, now.month, now.day);
+    _date = _today;
   }
 
   final Auth _auth;
@@ -39,14 +42,16 @@ class AppState extends ChangeNotifier {
   }
 
   List<PaymentCard> cardsAll = [];
-  List<PaymentCard> cardsToday = [];
+  List<PaymentCard> cardsForDate = [];
 
-  DateTime _today = DateTime.now().toLocal();
+  DateTime _today;
   DateTime get today => _today;
-  set today(DateTime value) {
-    if (value != _today) {
-      _today = value;
-      cardsToday = _getCardsForToday(cardsAll);
+  DateTime _date;
+  DateTime get date => _date;
+  set date(DateTime value) {
+    if (value != _date) {
+      _date = DateTime(value.year, value.month, value.day);
+      cardsForDate = _getCardsForToday(cardsAll);
       notifyListeners();
     }
   }
@@ -104,8 +109,8 @@ class AppState extends ChangeNotifier {
         .where((card) => card != null)
         .toList();
     _log.d('_setupGSheets: parsed cards: total ${cardsAll.length}');
-    cardsToday = _getCardsForToday(cardsAll);
-    _log.d('_setupGSheets: filtered cards: total ${cardsToday.length}');
+    cardsForDate = _getCardsForToday(cardsAll);
+    _log.d('_setupGSheets: filtered cards: total ${cardsForDate.length}');
     _log.d('_setupGSheets: Done');
   }
 
@@ -141,9 +146,24 @@ class AppState extends ChangeNotifier {
   }
 
   List<PaymentCard> _getCardsForToday(List<PaymentCard> cards) {
-    return cards
+    final list = cards
         .where((card) =>
-            (today.day < card.paymentDueDate && today.day > card.statementDate))
+            [
+              PaymentCardStatus.use,
+              PaymentCardStatus.alert,
+            ].indexOf(card.status) >
+            -1)
         .toList();
+    list.sort((a, b) {
+      if (a.status == b.status) {
+        return 0;
+      }
+      if (a.status == PaymentCardStatus.use &&
+          b.status != PaymentCardStatus.use) {
+        return -1;
+      }
+      return 1;
+    });
+    return list;
   }
 }

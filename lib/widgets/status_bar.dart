@@ -52,7 +52,8 @@ class StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List<Status> list = List.generate(daysInMonth, (d) {
+    List<Status> list = List.generate(daysInMonth, (i) {
+      var d = i + 1;
       if (d == today.day) {
         return Status.today();
       } else if (d == paymentDate) {
@@ -61,22 +62,22 @@ class StatusBar extends StatelessWidget {
         return Status.statementDate();
       } else {
         if (paymentDate < statementDate) {
-          if (d < paymentDate - 3) {
-            return Status.statementDate();
-          } else if (d >= statementDate - 3 && d < statementDate) {
+          if (d < paymentDate - 4) {
+            return Status.use();
+          } else if (d < paymentDate) {
             return Status.alert();
           } else if (d > paymentDate && d < statementDate) {
             return Status.doNotUse();
           } else if (d > statementDate) {
             return Status.use();
           } else {
-            return Status.alert();
+            return Status.doNotUse();
           }
         } else {
-          if (d > statementDate && d < paymentDate - 3) {
+          if (d > statementDate && d < paymentDate - 4) {
             return Status.use();
-          } else if (false) {
-            return Status.paymentDate();
+          } else if (d < statementDate || d > paymentDate) {
+            return Status.doNotUse();
           } else {
             return Status.alert();
           }

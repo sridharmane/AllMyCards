@@ -68,19 +68,33 @@ class _CardViewState extends State<CardView> {
     }
     return Card(
       elevation: _expanded ? 4 : elevation,
+      clipBehavior: Clip.antiAlias,
+      shape: widget.mode == CardViewMode.row
+          ? ContinuousRectangleBorder()
+          : RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(5)),
+            ),
       margin: _expanded
           ? margin.copyWith(
               top: min(16, margin.top + 4),
               bottom: min(16, margin.top + 8),
             )
           : margin,
-      child: Align(
-        alignment: Alignment.topLeft,
-        child: InkWell(
-          onTap: () {
-            _expanded = !_expanded;
-            setState(() {});
-          },
+      child: InkWell(
+        onTap: () {
+          _expanded = !_expanded;
+          setState(() {});
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: StatusColors.get(widget.card.status),
+                width: 4.0,
+                style: BorderStyle.solid,
+              ),
+            ),
+          ),
           child: Padding(
             padding: padding,
             child: Column(

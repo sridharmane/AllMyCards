@@ -47,23 +47,33 @@ class PaymentCard {
     this.statementDate,
     this.limit,
   }) {
-    final today = DateTime.now();
-    final pmtDate = DateTime(today.year, today.month, paymentDueDate);
-    final stmtDate = DateTime(today.year, today.month, statementDate);
-    if (today.isBefore(pmtDate)) {
-      if (today.isAfter(pmtDate.subtract(Duration(days: 4)))) {
-        status = PaymentCardStatus.alert;
-      } else {
-        status = PaymentCardStatus.use;
+    if (paymentDueDate != null && statementDate != null) {
+      var today = DateTime.now();
+      today = DateTime(today.year, today.month, today.day);
+      var pmtDate = DateTime(today.year, today.month, paymentDueDate);
+      var stmtDate = DateTime(today.year, today.month, statementDate);
+
+      if (pmtDate.isAfter(stmtDate)) {
+        stmtDate = DateTime(stmtDate.year, stmtDate.month + 1, stmtDate.day);
       }
-    } else if (today.isAfter(pmtDate)) {
-      status = PaymentCardStatus.use;
-    } else if (today.isAtSameMomentAs(pmtDate)) {
-      status = PaymentCardStatus.paymentDate;
-    } else if (today.isAtSameMomentAs(stmtDate)) {
-      status = PaymentCardStatus.statementDate;
-    } else {
-      status = PaymentCardStatus.doNotuse;
+
+      if (today.isBefore(pmtDate)) {
+        if (today.isBefore(pmtDate.subtract(Duration(days: 4)))) {
+          status = PaymentCardStatus.use;
+        } else {
+          status = PaymentCardStatus.alert;
+        }
+      } else if (today.isAfter(stmtDate)) {
+        status = PaymentCardStatus.use;
+      } else if (today.isAtSameMomentAs(pmtDate)) {
+        status = PaymentCardStatus.paymentDate;
+      } else if (today.isAtSameMomentAs(stmtDate)) {
+        status = PaymentCardStatus.statementDate;
+      } else if (today.isAfter(pmtDate) && today.isBefore(stmtDate)) {
+        status = PaymentCardStatus.doNotuse;
+      } else {
+        status = PaymentCardStatus.doNotuse;
+      }
     }
   }
 

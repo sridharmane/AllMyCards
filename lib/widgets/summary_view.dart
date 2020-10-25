@@ -1,6 +1,7 @@
 import 'package:all_my_cards/pages/manage_card_page.dart';
 import 'package:all_my_cards/states/app_state.dart';
 import 'package:all_my_cards/widgets/card_view.dart';
+import 'package:all_my_cards/widgets/card_view_mode_selector.dart';
 import 'package:all_my_cards/widgets/section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -17,20 +18,26 @@ class SummaryView extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.calendar_today),
             title: Text(
-              '${DateFormat(DateFormat.ABBR_MONTH_DAY).format(state.today)}',
+              '${DateFormat(DateFormat.ABBR_MONTH_DAY).format(state.date)}',
               style: Theme.of(context).textTheme.headline5,
             ),
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
-                initialDate: state.today,
-                firstDate: state.today.subtract(Duration(days: 365)),
-                lastDate: state.today.add(Duration(days: 365)),
+                initialDate: state.date,
+                firstDate: state.date.subtract(Duration(days: 365)),
+                lastDate: state.date.add(Duration(days: 365)),
               );
               if (picked != null) {
-                state.today = picked;
+                state.date = picked;
               }
             },
+            trailing: state.today != state.date
+                ? IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => state.date = state.today,
+                  )
+                : null,
           ),
           Divider(
             height: 1,
@@ -132,31 +139,7 @@ class SummaryView extends StatelessWidget {
               children: [
                 SectionHeader(label: '${state.cardsAll.length} cards'),
                 Spacer(),
-                ButtonBar(
-                  mainAxisSize: MainAxisSize.max,
-                  alignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                        icon: Icon(Icons.view_agenda),
-                        iconSize: 20,
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        color: state.cardViewMode == CardViewMode.info
-                            ? Theme.of(context).accentColor
-                            : Theme.of(context).iconTheme.color,
-                        onPressed: () =>
-                            state.cardViewMode = CardViewMode.info),
-                    IconButton(
-                      icon: Icon(Icons.view_list),
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      color: state.cardViewMode == CardViewMode.row
-                          ? Theme.of(context).accentColor
-                          : Theme.of(context).iconTheme.color,
-                      onPressed: () => state.cardViewMode = CardViewMode.row,
-                    ),
-                  ],
-                ),
+                CardViewModeSelector(),
               ],
             ),
             for (var card in state.cardsAll)
@@ -164,22 +147,30 @@ class SummaryView extends StatelessWidget {
                 key: ValueKey(card),
                 card: card,
                 mode: state.cardViewMode,
-                today: state.today,
+                today: state.date,
               ),
           ],
           if (state.cardsFilter == CardsFilters.usableToday) ...[
-            if (state.cardsToday.length == 0 && state.cardsAll.length > 0)
+            if (state.cardsForDate.length == 0 && state.cardsAll.length > 0)
               SectionHeader(label: 'No cards usable today'),
-            if (state.cardsToday.length > 0) ...[
-              SectionHeader(
-                  label:
-                      '${state.cardsToday.length} of ${state.cardsAll.length} cards usable today'),
-              for (var card in state.cardsToday)
+            if (state.cardsForDate.length > 0) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SectionHeader(
+                      label:
+                          '${state.cardsForDate.length} of ${state.cardsAll.length} cards usable today'),
+                  Spacer(),
+                  CardViewModeSelector(),
+                ],
+              ),
+              for (var card in state.cardsForDate)
                 CardView(
                   key: ValueKey(card),
                   card: card,
                   mode: state.cardViewMode,
-                  today: state.today,
+                  today: state.date,
                 ),
             ],
           ],
