@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:all_my_cards/models/payment_card.dart';
 import 'package:http/http.dart';
 import 'package:logger/logger.dart';
 
@@ -90,8 +91,14 @@ class GSheets {
 
     Logger().d('getAll: response: ${resp.body}');
     Map json = jsonDecode(resp.body);
-
-    return json.containsKey('values') ? json['values'] : [];
+    final values = json.containsKey('values') ? json['values'] : [];
+    if (values.length > 0) {
+      // remove the header
+      if (values.first.first == PaymentCard.headerRow.first) {
+        values.removeAt(0);
+      }
+    }
+    return values;
   }
 
   Future<dynamic> updateValues(
@@ -111,6 +118,10 @@ class GSheets {
     if (cellRange != null && cellRange.isNotEmpty) {
       range += '$cellRange';
     }
+
+    // add default header row
+    values.insert(0, PaymentCard.headerRow);
+
     Map<String, dynamic> data = {
       'values': values,
       'majorDimension': majorDimension,

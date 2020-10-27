@@ -1,5 +1,6 @@
 import 'package:all_my_cards/models/payment_card.dart';
 import 'package:all_my_cards/states/app_state.dart';
+import 'package:all_my_cards/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -55,7 +56,7 @@ class _ManageCardPageState extends State<ManageCardPage> {
                 primary: false,
                 children: [
                   TextFormField(
-                    initialValue: state.tempCard?.label,
+                    initialValue: state.tempCard?.name,
                     decoration: InputDecoration(
                         border: OutlineInputBorder(), labelText: 'Card Name'),
                     validator: (value) {
@@ -65,14 +66,14 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard.label = value;
+                      state.tempCard = state.tempCard.copyWith(name: value);
                     },
                   ),
                   const SizedBox(
                     height: 8,
                   ),
                   TextFormField(
-                    initialValue: state.tempCard?.cardHolderName,
+                    initialValue: state.tempCard?.nameOnCard,
                     decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         labelText: 'Name on Card'),
@@ -83,14 +84,15 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard.cardHolderName = value;
+                      state.tempCard =
+                          state.tempCard.copyWith(nameOnCard: value);
                     },
                   ),
                   const SizedBox(
                     height: 8,
                   ),
                   TextFormField(
-                    initialValue: state.tempCard?.limit,
+                    initialValue: '${state.tempCard?.limit}',
                     decoration: InputDecoration(
                         border: OutlineInputBorder(), labelText: 'Card Limit'),
                     validator: (value) {
@@ -100,7 +102,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard.limit = value;
+                      state.tempCard =
+                          state.tempCard.copyWith(limit: int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                   ),
@@ -120,7 +123,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard.paymentDueDate = int.tryParse(value);
+                      state.tempCard = state.tempCard
+                          .copyWith(paymentDueDate: int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -141,10 +145,43 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard.statementDate = int.tryParse(value);
+                      state.tempCard = state.tempCard
+                          .copyWith(statementDate: int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  const SizedBox(
+                    height: 8,
+                  ),
+                  TextFormField(
+                    initialValue:
+                        state.tempCard?.color?.value?.toRadixString(16) ?? '',
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      labelText: 'Color',
+                      prefixText: '#',
+                    ),
+                    validator: (value) {
+                      if (value.length < 1) {
+                        return null;
+                      }
+                      if (value.length < 6) {
+                        return 'Too Short (Format is RRGGBB)';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) {
+                      state.tempCard = state.tempCard
+                          .copyWith(color: ColorUtils.fromHex('#$value'));
+                    },
+                    keyboardType: TextInputType.text,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp('/[[:xdigit:]]+/g'),
+                        replacementString: '',
+                      )
+                    ],
                   ),
                 ],
               )),

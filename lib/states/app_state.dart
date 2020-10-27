@@ -51,7 +51,7 @@ class AppState extends ChangeNotifier {
   set date(DateTime value) {
     if (value != _date) {
       _date = DateTime(value.year, value.month, value.day);
-      cardsForDate = _getCardsForToday(cardsAll);
+      cardsForDate = _getCardsForToday();
       notifyListeners();
     }
   }
@@ -72,8 +72,8 @@ class AppState extends ChangeNotifier {
         isLoading = true;
         notifyListeners();
         await _setupGSheets();
-      } catch (e) {
-        _log.e('Error occured: $e');
+      } catch (e, stackTrace) {
+        _log.e('Error occured in GSheets', e, stackTrace);
       } finally {
         isLoading = false;
         notifyListeners();
@@ -104,12 +104,15 @@ class AppState extends ChangeNotifier {
     }
     final values = await _gSheets.getValues(_fileId);
     cardsAll = values
-        .map<PaymentCard>(
-            (row) => PaymentCard.fromRow('${values.indexOf(row)}', row))
+        .map<PaymentCard>((row) => PaymentCard.fromRow(
+              id: '${values.indexOf(row)}',
+              date: date,
+              row: row,
+            ))
         .where((card) => card != null)
         .toList();
     _log.d('_setupGSheets: parsed cards: total ${cardsAll.length}');
-    cardsForDate = _getCardsForToday(cardsAll);
+    cardsForDate = _getCardsForToday();
     _log.d('_setupGSheets: filtered cards: total ${cardsForDate.length}');
     _log.d('_setupGSheets: Done');
   }
@@ -145,8 +148,9 @@ class AppState extends ChangeNotifier {
     return cards.map<List<dynamic>>((c) => c.toRow()).toList();
   }
 
-  List<PaymentCard> _getCardsForToday(List<PaymentCard> cards) {
-    final list = cards
+  List<PaymentCard> _getCardsForToday() {
+    final list = cardsAll
+        .map((c) => c.copyWith(date: c.date))
         .where((card) =>
             [
               PaymentCardStatus.use,

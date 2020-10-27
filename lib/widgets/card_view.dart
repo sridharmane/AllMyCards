@@ -120,7 +120,7 @@ class _CardViewState extends State<CardView> {
           children: [
             Expanded(
               child: Text(
-                '${widget.card.label}',
+                '${widget.card.name}',
                 style: Theme.of(context).textTheme.headline6,
                 maxLines: 1,
               ),
@@ -131,14 +131,14 @@ class _CardViewState extends State<CardView> {
           height: 8,
         ),
         Text(
-          '${widget.card.cardHolderName}',
+          '${widget.card.nameOnCard}',
           style: Theme.of(context).textTheme.bodyText2,
         ),
         SizedBox(
           height: 8,
         ),
         Text(
-          '${currencyFormat.format(int.tryParse(widget.card.limit))}',
+          '${currencyFormat.format(widget.card.limit)}',
           style: Theme.of(context).textTheme.bodyText2,
         ),
       ],
@@ -232,7 +232,7 @@ class _CardViewState extends State<CardView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.card.label,
+          widget.card.name,
           style: Theme.of(context).textTheme.caption,
         ),
         StatusBar(
