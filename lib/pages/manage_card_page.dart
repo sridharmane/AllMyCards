@@ -3,6 +3,7 @@ import 'package:all_my_cards/states/app_state.dart';
 import 'package:all_my_cards/utils/color_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
 enum ManageCardPageModes {
@@ -29,7 +30,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
     switch (widget.mode) {
       case ManageCardPageModes.add:
         title = 'Add';
-        Provider.of<AppState>(context, listen: false).tempCard = PaymentCard();
+        Provider.of<AppState>(context, listen: false).tempCard =
+            PaymentCard(date: DateTime.now());
         break;
       case ManageCardPageModes.edit:
         title = 'Edit';
@@ -52,6 +54,7 @@ class _ManageCardPageState extends State<ManageCardPage> {
             children: [
               Expanded(
                   child: ListView(
+                key: ObjectKey(state.tempCard),
                 padding: const EdgeInsets.all(16.0),
                 primary: false,
                 children: [
@@ -154,34 +157,66 @@ class _ManageCardPageState extends State<ManageCardPage> {
                   const SizedBox(
                     height: 8,
                   ),
-                  TextFormField(
-                    initialValue:
-                        state.tempCard?.color?.value?.toRadixString(16) ?? '',
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Color',
-                      prefixText: '#',
+                  // TextFormField(
+                  //   decoration: InputDecoration(
+                  //       border: OutlineInputBorder(),
+                  //       labelText: 'Color',
+                  //       // prefixText: '#',
+                  //       prefix: CircleAvatar(
+                  //         backgroundColor: state.tempCard.color,
+                  //       ),
+                  //       suffix: ),
+                  //   validator: (value) {
+                  //     if (value.length < 1) {
+                  //       return null;
+                  //     }
+                  //     if (value.length < 6) {
+                  //       return 'Too Short (Format is RRGGBB)';
+                  //     }
+                  //     return null;
+                  //   },
+                  //   onSaved: (value) {
+                  //     state.tempCard = state.tempCard
+                  //         .copyWith(color: ColorUtils.fromHex('#$value'));
+                  //   },
+                  //   keyboardType: TextInputType.text,
+                  //   inputFormatters: [
+                  //     FilteringTextInputFormatter.allow(
+                  //       RegExp('/[[:xdigit:]]+/g'),
+                  //       replacementString: '',
+                  //     )
+                  //   ],
+                  // ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: CircleAvatar(
+                      backgroundColor: state.tempCard.color,
                     ),
-                    validator: (value) {
-                      if (value.length < 1) {
-                        return null;
-                      }
-                      if (value.length < 6) {
-                        return 'Too Short (Format is RRGGBB)';
-                      }
-                      return null;
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              content: SingleChildScrollView(
+                                child: ColorPicker(
+                                  displayThumbColor: true,
+                                  onColorChanged: (Color value) {
+                                    state.tempCard =
+                                        state.tempCard.copyWith(color: value);
+                                    print(state.tempCard.toString());
+                                  },
+                                  pickerColor: state.tempCard.color,
+                                ),
+                              ),
+                              actions: [
+                                OutlinedButton(
+                                  child: Text('Done'),
+                                  onPressed: Navigator.of(context).pop,
+                                ),
+                              ],
+                            );
+                          });
                     },
-                    onSaved: (value) {
-                      state.tempCard = state.tempCard
-                          .copyWith(color: ColorUtils.fromHex('#$value'));
-                    },
-                    keyboardType: TextInputType.text,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp('/[[:xdigit:]]+/g'),
-                        replacementString: '',
-                      )
-                    ],
                   ),
                 ],
               )),

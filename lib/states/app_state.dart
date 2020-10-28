@@ -30,7 +30,15 @@ class AppState extends ChangeNotifier {
   String get fileId => _fileId;
 
   String _defaultFileName = 'AllMyCards DB';
-  PaymentCard tempCard;
+  PaymentCard _tempCard;
+
+  PaymentCard get tempCard => _tempCard;
+  set tempCard(PaymentCard value) {
+    if (value != _tempCard) {
+      _tempCard = value;
+      notifyListeners();
+    }
+  }
 
   CardViewMode _cardViewMode = CardViewMode.info;
   CardViewMode get cardViewMode => _cardViewMode;

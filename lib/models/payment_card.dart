@@ -94,7 +94,7 @@ class PaymentCard {
 
   PaymentCard({
     this.id,
-    DateTime date,
+    @required DateTime date,
     this.name,
     this.issuer,
     this.lastFourDigits,
@@ -104,9 +104,8 @@ class PaymentCard {
     this.statementDate,
     this.color,
     this.network,
-  }) : date = DateTime(date.year, date.month, date.day) {
-    assert(date != null);
-  }
+  })  : assert(date != null),
+        date = DateTime(date.year, date.month, date.day);
 
   PaymentCard copyWith({
     String id,
@@ -159,8 +158,6 @@ class PaymentCard {
 
   List<dynamic> toRow() {
     return [
-      id,
-      date,
       name,
       issuer,
       lastFourDigits,
@@ -168,9 +165,14 @@ class PaymentCard {
       limit,
       paymentDueDate,
       statementDate,
-      color,
+      ColorUtils.toHex(color),
       network,
     ];
+  }
+
+  @override
+  String toString() {
+    return '${toRow()}';
   }
 
   static const List<String> headerRow = [
