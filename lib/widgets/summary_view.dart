@@ -56,7 +56,7 @@ class SummaryView extends StatelessWidget {
           //         style: Theme.of(context).textTheme.headline5),
           //   ],
           // ),
-          if (state.cardsAll.length == 0)
+          if (state.cards.length == 0)
             Card(
               margin: const EdgeInsets.all(16),
               child: Padding(
@@ -82,7 +82,7 @@ class SummaryView extends StatelessWidget {
                 ),
               ),
             ),
-          if (state.cardsAll.length > 0) ...[
+          if (state.cards.length > 0) ...[
             ChipTheme(
               data: Theme.of(context).chipTheme.copyWith(
                     selectedColor: Theme.of(context).accentColor,
@@ -132,47 +132,28 @@ class SummaryView extends StatelessWidget {
               height: 1,
             ),
           ],
-          if (state.cardsFilter == CardsFilters.all) ...[
+
+          if (state.cards.length == 0 && state.cards.length > 0)
+            SectionHeader(label: 'No cards usable today'),
+          if (state.cards.length > 0) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                SectionHeader(label: '${state.cardsAll.length} cards'),
+                SectionHeader(
+                    label:
+                        '${state.cards.length} of ${state.totalCards} cards usable today'),
                 Spacer(),
                 CardViewModeSelector(),
               ],
             ),
-            for (var card in state.cardsAll)
+            for (var card in state.cards)
               CardView(
                 key: ValueKey(card),
                 card: card,
                 mode: state.cardViewMode,
                 today: state.date,
               ),
-          ],
-          if (state.cardsFilter == CardsFilters.usableToday) ...[
-            if (state.cardsForDate.length == 0 && state.cardsAll.length > 0)
-              SectionHeader(label: 'No cards usable today'),
-            if (state.cardsForDate.length > 0) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  SectionHeader(
-                      label:
-                          '${state.cardsForDate.length} of ${state.cardsAll.length} cards usable today'),
-                  Spacer(),
-                  CardViewModeSelector(),
-                ],
-              ),
-              for (var card in state.cardsForDate)
-                CardView(
-                  key: ValueKey(card),
-                  card: card,
-                  mode: state.cardViewMode,
-                  today: state.date,
-                ),
-            ],
           ],
         ],
       ),

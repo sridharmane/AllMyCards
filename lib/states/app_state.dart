@@ -1,7 +1,8 @@
 import 'package:all_my_cards/models/auth.dart';
+import 'package:all_my_cards/models/credit_card.dart';
 import 'package:all_my_cards/models/g_sheets.dart';
-import 'package:all_my_cards/models/payment_card.dart';
 import 'package:all_my_cards/models/secure_storage.dart';
+import 'package:all_my_cards/utils/credit_card_utils.dart';
 import 'package:all_my_cards/widgets/card_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:logger/logger.dart';
@@ -30,10 +31,10 @@ class AppState extends ChangeNotifier {
   String get fileId => _fileId;
 
   String _defaultFileName = 'AllMyCards DB';
-  PaymentCard _tempCard;
+  CreditCard _tempCard;
 
-  PaymentCard get tempCard => _tempCard;
-  set tempCard(PaymentCard value) {
+  CreditCard get tempCard => _tempCard;
+  set tempCard(CreditCard value) {
     if (value != _tempCard) {
       _tempCard = value;
       notifyListeners();
@@ -49,8 +50,10 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  List<PaymentCard> cardsAll = [];
-  List<PaymentCard> cardsForDate = [];
+  List<CreditCard> _cards = [];
+  int get totalCards => _cards.length;
+
+  List<CreditCardWithStatus> cards = [];
 
   DateTime _today;
   DateTime get today => _today;
@@ -58,8 +61,11 @@ class AppState extends ChangeNotifier {
   DateTime get date => _date;
   set date(DateTime value) {
     if (value != _date) {
+      isLoading = true;
+      notifyListeners();
       _date = DateTime(value.year, value.month, value.day);
-      cardsForDate = _getCardsForToday();
+      _refreshCards();
+      isLoading = false;
       notifyListeners();
     }
   }
@@ -69,7 +75,11 @@ class AppState extends ChangeNotifier {
   CardsFilters _cardsFilter = CardsFilters.usableToday;
   CardsFilters get cardsFilter => _cardsFilter;
   set cardsFilter(CardsFilters filter) {
+    isLoading = true;
+    notifyListeners();
     _cardsFilter = filter;
+    _refreshCards();
+    isLoading = false;
     notifyListeners();
   }
 
@@ -80,6 +90,7 @@ class AppState extends ChangeNotifier {
         isLoading = true;
         notifyListeners();
         await _setupGSheets();
+        await loadData();
       } catch (e, stackTrace) {
         _log.e('Error occured in GSheets', e, stackTrace);
       } finally {
@@ -110,19 +121,64 @@ class AppState extends ChangeNotifier {
       }
       await SecureStorage().set(SecureStorageKeys.sheetId, _fileId);
     }
+
+    _log.d('_setupGSheets: Done');
+  }
+
+  Future<List<CreditCard>> loadData() async {
+    _log.d('#################################################################');
+    _log.d('loadData: start');
     final values = await _gSheets.getValues(_fileId);
-    cardsAll = values
-        .map<PaymentCard>((row) => PaymentCard.fromRow(
-              id: '${values.indexOf(row)}',
-              date: date,
+    _cards = values
+        .map<CreditCard>((row) => CreditCard.fromRow(
               row: row,
             ))
         .where((card) => card != null)
         .toList();
-    _log.d('_setupGSheets: parsed cards: total ${cardsAll.length}');
-    cardsForDate = _getCardsForToday();
-    _log.d('_setupGSheets: filtered cards: total ${cardsForDate.length}');
-    _log.d('_setupGSheets: Done');
+
+    _log.d(cards);
+    _log.d('#################################################################');
+    _log.d('loadData: parsed cards: total ${_cards.length}');
+    _refreshCards();
+    _log.d('loadData: filtered cards: total ${cards.length}');
+    _log.d('loadData: end');
+    notifyListeners();
+    return _cards;
+  }
+
+  void applyFilters() {
+    cards = _cards
+        .map<CreditCardWithStatus>((c) => CreditCardWithStatus(
+              card: c,
+              status: CreditCardUtils.status(date, c),
+            ))
+        .where((ccs) {
+      if (cardsFilter == CardsFilters.all) {
+        return true;
+      } else {
+        return ccs.status == CreditCardStatus.use ||
+            ccs.status == CreditCardStatus.alert;
+      }
+    }).toList();
+    print('${cards.length}/${_cards.length}');
+  }
+
+  void applySorting() {
+    cards.sort((a, b) {
+      if (a == b) {
+        return 0;
+      }
+      if (a.status == CreditCardStatus.use &&
+          b.status != CreditCardStatus.use) {
+        return -1;
+      }
+      return 1;
+    });
+  }
+
+  _refreshCards() {
+    applyFilters();
+    applySorting();
   }
 
   @override
@@ -132,50 +188,27 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addCard() async {
-    cardsAll.add(tempCard);
-    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
+    _cards.add(tempCard);
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(_cards));
     tempCard = null;
     notifyListeners();
   }
 
   Future<void> editCard() async {
-    int index = cardsAll.indexWhere((c) => c.id == tempCard.id);
-    cardsAll[index] = tempCard;
-    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
+    int index = _cards.indexWhere((c) => c.hashCode == tempCard.hashCode);
+    _cards[index] = tempCard;
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(_cards));
     tempCard = null;
     notifyListeners();
   }
 
-  Future<void> deleteCard(PaymentCard card) async {
-    cardsAll.removeWhere((c) => c.id == card.id);
-    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(cardsAll));
+  Future<void> deleteCard(CreditCard card) async {
+    _cards.removeWhere((c) => c.hashCode == card.hashCode);
+    await _gSheets.updateValues(_fileId, _cardsAsSheetValues(_cards));
     notifyListeners();
   }
 
-  List<List<dynamic>> _cardsAsSheetValues(List<PaymentCard> cards) {
+  List<List<dynamic>> _cardsAsSheetValues(List<CreditCard> cards) {
     return cards.map<List<dynamic>>((c) => c.toRow()).toList();
-  }
-
-  List<PaymentCard> _getCardsForToday() {
-    final list = cardsAll
-        .map((c) => c.copyWith(date: c.date))
-        .where((card) =>
-            [
-              PaymentCardStatus.use,
-              PaymentCardStatus.alert,
-            ].indexOf(card.status) >
-            -1)
-        .toList();
-    list.sort((a, b) {
-      if (a.status == b.status) {
-        return 0;
-      }
-      if (a.status == PaymentCardStatus.use &&
-          b.status != PaymentCardStatus.use) {
-        return -1;
-      }
-      return 1;
-    });
-    return list;
   }
 }

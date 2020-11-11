@@ -1,4 +1,4 @@
-import 'package:all_my_cards/models/payment_card.dart';
+import 'package:all_my_cards/models/credit_card.dart';
 import 'package:all_my_cards/states/app_state.dart';
 import 'package:all_my_cards/utils/color_utils.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +15,14 @@ class ManageCardPage extends StatefulWidget {
   const ManageCardPage({this.mode = ManageCardPageModes.add, this.card});
 
   final ManageCardPageModes mode;
-  final PaymentCard card;
+  final CreditCard card;
   @override
   _ManageCardPageState createState() => _ManageCardPageState();
 }
 
 class _ManageCardPageState extends State<ManageCardPage> {
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
-  PaymentCard card;
+  CreditCard card;
   String title;
 
   @override
@@ -30,8 +30,7 @@ class _ManageCardPageState extends State<ManageCardPage> {
     switch (widget.mode) {
       case ManageCardPageModes.add:
         title = 'Add';
-        Provider.of<AppState>(context, listen: false).tempCard =
-            PaymentCard(date: DateTime.now());
+        Provider.of<AppState>(context, listen: false).tempCard = CreditCard();
         break;
       case ManageCardPageModes.edit:
         title = 'Edit';
@@ -69,7 +68,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard = state.tempCard.copyWith(name: value);
+                      state.tempCard = state.tempCard
+                        ..rebuild((b) => b..name = value);
                     },
                   ),
                   const SizedBox(
@@ -88,7 +88,7 @@ class _ManageCardPageState extends State<ManageCardPage> {
                     },
                     onSaved: (value) {
                       state.tempCard =
-                          state.tempCard.copyWith(nameOnCard: value);
+                          state.tempCard.rebuild((b) => b..nameOnCard = value);
                     },
                   ),
                   const SizedBox(
@@ -105,8 +105,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                       return null;
                     },
                     onSaved: (value) {
-                      state.tempCard =
-                          state.tempCard.copyWith(limit: int.tryParse(value));
+                      state.tempCard = state.tempCard
+                        ..rebuild((b) => b..limit = int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                   ),
@@ -127,7 +127,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                     },
                     onSaved: (value) {
                       state.tempCard = state.tempCard
-                          .copyWith(paymentDueDate: int.tryParse(value));
+                        ..rebuild(
+                            (b) => b..paymentDueDate = int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -149,7 +150,8 @@ class _ManageCardPageState extends State<ManageCardPage> {
                     },
                     onSaved: (value) {
                       state.tempCard = state.tempCard
-                          .copyWith(statementDate: int.tryParse(value));
+                        ..rebuild(
+                            (b) => b..statementDate = int.tryParse(value));
                     },
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -190,7 +192,7 @@ class _ManageCardPageState extends State<ManageCardPage> {
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     icon: CircleAvatar(
-                      backgroundColor: state.tempCard.color,
+                      backgroundColor: ColorUtils.fromHex(state.tempCard.color),
                     ),
                     onPressed: () {
                       showDialog(
@@ -201,11 +203,13 @@ class _ManageCardPageState extends State<ManageCardPage> {
                                 child: ColorPicker(
                                   displayThumbColor: true,
                                   onColorChanged: (Color value) {
-                                    state.tempCard =
-                                        state.tempCard.copyWith(color: value);
+                                    state.tempCard = state.tempCard
+                                      ..rebuild((b) =>
+                                          b..color = ColorUtils.toHex(value));
                                     print(state.tempCard.toString());
                                   },
-                                  pickerColor: state.tempCard.color,
+                                  pickerColor:
+                                      ColorUtils.fromHex(state.tempCard.color),
                                 ),
                               ),
                               actions: [

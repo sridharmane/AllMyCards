@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:all_my_cards/models/payment_card.dart';
+import 'package:all_my_cards/models/credit_card.dart';
 import 'package:http/http.dart';
 import 'package:logger/logger.dart';
 
@@ -94,7 +94,7 @@ class GSheets {
     final values = json.containsKey('values') ? json['values'] : [];
     if (values.length > 0) {
       // remove the header
-      if (values.first.first == PaymentCard.headerRow.first) {
+      if (values.first.first == CreditCard.headerRow.first) {
         values.removeAt(0);
       }
     }
@@ -120,7 +120,7 @@ class GSheets {
     }
 
     // add default header row
-    values.insert(0, PaymentCard.headerRow);
+    values.insert(0, CreditCard.headerRow);
 
     Map<String, dynamic> data = {
       'values': values,

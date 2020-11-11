@@ -48,14 +48,17 @@ class _MyHomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverList(
-            delegate: SliverChildListDelegate([
-              SummaryView(),
-            ]),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: Provider.of<AppState>(context).loadData,
+        child: CustomScrollView(
+          slivers: [
+            SliverList(
+              delegate: SliverChildListDelegate([
+                SummaryView(),
+              ]),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,8 +1,9 @@
 import 'dart:math';
 
-import 'package:all_my_cards/models/payment_card.dart';
+import 'package:all_my_cards/models/credit_card.dart';
 import 'package:all_my_cards/pages/manage_card_page.dart';
 import 'package:all_my_cards/states/app_state.dart';
+import 'package:all_my_cards/utils/credit_card_utils.dart';
 import 'package:all_my_cards/widgets/status_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,7 +22,7 @@ class CardView extends StatefulWidget {
     this.mode = CardViewMode.info,
   }) : super(key: key);
 
-  final PaymentCard card;
+  final CreditCardWithStatus card;
   final CardViewMode mode;
   final DateTime today;
 
@@ -120,7 +121,7 @@ class _CardViewState extends State<CardView> {
           children: [
             Expanded(
               child: Text(
-                '${widget.card.name}',
+                '${widget.card.card.name}',
                 style: Theme.of(context).textTheme.headline6,
                 maxLines: 1,
               ),
@@ -131,14 +132,14 @@ class _CardViewState extends State<CardView> {
           height: 8,
         ),
         Text(
-          '${widget.card.nameOnCard}',
+          '${widget.card.card.nameOnCard}',
           style: Theme.of(context).textTheme.bodyText2,
         ),
         SizedBox(
           height: 8,
         ),
         Text(
-          '${currencyFormat.format(widget.card.limit)}',
+          '${currencyFormat.format(widget.card.card.limit)}',
           style: Theme.of(context).textTheme.bodyText2,
         ),
       ],
@@ -151,12 +152,12 @@ class _CardViewState extends State<CardView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            title: Text('${widget.card.paymentDueDate}'),
+            title: Text('${widget.card.card.paymentDueDate}'),
             subtitle: Text('Payment due date'),
             contentPadding: EdgeInsets.all(0),
           ),
           ListTile(
-            title: Text('${widget.card.statementDate}'),
+            title: Text('${widget.card.card.statementDate}'),
             subtitle: Text('Statement date'),
             contentPadding: EdgeInsets.all(0),
           ),
@@ -197,7 +198,7 @@ class _CardViewState extends State<CardView> {
                             ));
                     if (result) {
                       Provider.of<AppState>(context, listen: false)
-                          .deleteCard(widget.card);
+                          .deleteCard(widget.card.card);
                     }
                   },
                 ),
@@ -215,7 +216,7 @@ class _CardViewState extends State<CardView> {
                       MaterialPageRoute(
                         builder: (context) => ManageCardPage(
                           mode: ManageCardPageModes.edit,
-                          card: widget.card,
+                          card: widget.card.card,
                         ),
                       ),
                     );
@@ -232,12 +233,12 @@ class _CardViewState extends State<CardView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.card.name,
+          widget.card.card.name,
           style: Theme.of(context).textTheme.caption,
         ),
         StatusBar(
-          paymentDate: widget.card.paymentDueDate,
-          statementDate: widget.card.statementDate,
+          paymentDate: widget.card.card.paymentDueDate,
+          statementDate: widget.card.card.statementDate,
           today: date,
         ),
       ],

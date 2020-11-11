@@ -1,4 +1,4 @@
-import 'package:all_my_cards/models/payment_card.dart';
+import 'package:all_my_cards/utils/credit_card_utils.dart';
 import 'package:all_my_cards/utils/date_utils.dart';
 import 'package:flutter/material.dart';
 
