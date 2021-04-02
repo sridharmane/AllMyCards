@@ -15,33 +15,6 @@ class SummaryView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          ListTile(
-            leading: Icon(Icons.calendar_today),
-            title: Text(
-              '${DateFormat(DateFormat.ABBR_MONTH_DAY).format(state.date)}',
-              style: Theme.of(context).textTheme.headline5,
-            ),
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: state.date,
-                firstDate: state.date.subtract(Duration(days: 365)),
-                lastDate: state.date.add(Duration(days: 365)),
-              );
-              if (picked != null) {
-                state.date = picked;
-              }
-            },
-            trailing: state.today != state.date
-                ? IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () => state.date = state.today,
-                  )
-                : null,
-          ),
-          Divider(
-            height: 1,
-          ),
           // Row(
           //   children: [
           //     SizedBox(
@@ -102,6 +75,7 @@ class SummaryView extends StatelessWidget {
                   ),
                   FilterChip(
                     label: Text('All'),
+                    showCheckmark: false,
                     selected: state.cardsFilter == CardsFilters.all,
                     onSelected: (bool value) {
                       if (value) {
@@ -114,17 +88,60 @@ class SummaryView extends StatelessWidget {
                   ),
                   FilterChip(
                     label: Text('Usable today'),
+                    showCheckmark: false,
                     selected: state.cardsFilter == CardsFilters.usableToday,
                     // selectedColor: Theme.of(context).primaryColor,
                     onSelected: (bool value) {
                       if (value) {
                         state.cardsFilter = CardsFilters.usableToday;
+                        state.date = state.today;
                       }
                     },
                   ),
                   SizedBox(
                     width: 16,
                   ),
+                  if (state.date != state.today)
+                    FilterChip(
+                      label: Text('Usable on ${state.date.day}'),
+                      showCheckmark: false,
+                      selected:
+                          state.cardsFilter == CardsFilters.usableAnotherDay,
+                      // selectedColor: Theme.of(context).primaryColor,
+                      onSelected: (bool value) async {
+                        if (!value) {
+                          // await pickDay(context, state);
+                          state.cardsFilter = CardsFilters.usableToday;
+                          state.date = state.today;
+                        }
+                      },
+                    ),
+                  if (state.date == state.today)
+                    FilterChip(
+                      avatar: Icon(
+                        Icons.add,
+                        size: 16,
+                      ),
+                      label: Text('Select day'),
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                          width: 2,
+                          color: Theme.of(context).dividerColor,
+                        ),
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      showCheckmark: false,
+                      selected:
+                          state.cardsFilter == CardsFilters.usableAnotherDay,
+                      // selectedColor: Theme.of(context).primaryColor,
+                      onSelected: (bool value) async {
+                        if (value) {
+                          await pickDay(context, state);
+                          state.cardsFilter = CardsFilters.usableAnotherDay;
+                        }
+                      },
+                    ),
                 ],
               ),
             ),
@@ -158,5 +175,17 @@ class SummaryView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future pickDay(BuildContext context, AppState state) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: state.date,
+      firstDate: state.date.subtract(Duration(days: 365)),
+      lastDate: state.date.add(Duration(days: 365)),
+    );
+    if (picked != null) {
+      state.date = picked;
+    }
   }
 }

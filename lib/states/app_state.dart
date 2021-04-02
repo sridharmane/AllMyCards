@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 enum CardsFilters {
   all,
   usableToday,
+  usableAnotherDay,
 }
 
 class AppState extends ChangeNotifier {
